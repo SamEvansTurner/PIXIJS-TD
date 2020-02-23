@@ -1,0 +1,1 @@
+{"version":3,"sources":["main.css"],"names":[],"mappings":"AAAA,KACC,QAAS,CACT,SAAU,CACV,eACD,CAEA,OACC,aACD","file":"main.2fe335ea.css","sourceRoot":"../src","sourcesContent":["body {\n\tmargin: 0;\n\tpadding: 0;\n\toverflow: hidden;\n}\n\ncanvas {\n\tdisplay: block;\n}\n"]}
