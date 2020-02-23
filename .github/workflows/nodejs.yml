@@ -28,4 +28,4 @@ jobs:
         ACCESS_TOKEN: ${{ secrets.GH_PAGES_SECRET }}
         BRANCH: gh-pages # The branch the action should deploy to.
         FOLDER: dist # The folder the action should deploy.
-      if: matrix.node-version == 12.x
+      if: matrix.node-version == '12.x'
