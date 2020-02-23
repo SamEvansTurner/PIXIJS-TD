@@ -22,10 +22,9 @@ jobs:
     - run: npm test
       env:
         CI: true
-    - name: Upload artifact
-      uses: actions/upload-artifact@v1.0.0
+    - name: Build and Deploy
+      uses: JamesIves/github-pages-deploy-action@releases/v3
       with:
-        # Artifact name
-        name: dist
-        # Directory containing files to upload
-        path: dist/
+        ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+        BRANCH: gh-pages # The branch the action should deploy to.
+        FOLDER: build # The folder the action should deploy.
