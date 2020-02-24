@@ -6,13 +6,10 @@ export class GameObject {
 	yVel: number;
 	graphics: PIXI.Graphics;
 	sprite: PIXI.Sprite;
-	bounds: PIXI.Bounds;
 	constructor(
 		public renderer: PIXI.AbstractRenderer,
 		public stage: PIXI.Container
-	) {
-		this.bounds = new PIXI.Bounds();
-	}
+	) {}
 	remove(): any {}
 	update(_delta: number): any {}
 	render(_delta: number): any {}

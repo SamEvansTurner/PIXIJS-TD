@@ -8,6 +8,15 @@
 			"script": "build",
 			"path": "pixijs-first-test/",
 			"problemMatcher": ["$eslint-compact"],
+			"group": "build"
+		},
+		{
+			"label": "manual",
+			"type": "shell",
+			"command": "bash -c 'npm run build && scp -r dist/. lighttpd:PixiJS/ && firefox https://lighttpd/'",
+			"windows": {
+				"command": "echo Sorry, this is not supported."
+			},
 			"group": {
 				"kind": "build",
 				"isDefault": true

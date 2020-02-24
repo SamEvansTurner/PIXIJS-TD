@@ -3,12 +3,12 @@ import { State } from "./util/state";
 import { Circle } from "./circle";
 import { GameObject } from "./util/gameobject";
 import { Grid } from "./grid";
-import { Position } from "./util/position";
+import { IPosition } from "./util/iposition";
 export class Game implements State {
 	graphics: PIXI.Graphics;
 	gameObjects: Array<GameObject>;
 	currentObject: GameObject;
-	numCells: number = 20;
+	numCells: number = 31;
 	cellWidth: number = 4;
 	circleRadius: number;
 	circleTexture: PIXI.Texture;
@@ -16,6 +16,8 @@ export class Game implements State {
 	grid: Grid;
 	textures: Array<PIXI.Texture>;
 	numTextures: number = 20;
+	maxWidth: number;
+	maxHeight: number;
 
 	constructor(
 		public renderer: PIXI.AbstractRenderer,
@@ -26,24 +28,24 @@ export class Game implements State {
 		this.stage.addChild(this.graphics);
 		this.gameObjects = [];
 
-		var maxWidth = this.renderer.width;
-		var maxHeight = this.renderer.height;
+		this.maxWidth = this.renderer.width;
+		this.maxHeight = this.renderer.height;
 
 		this.textures = [];
 
-		if (maxWidth > maxHeight) {
-			this.gridResolution = maxWidth / this.numCells;
+		if (this.maxWidth > this.maxHeight) {
+			this.gridResolution = this.maxWidth / this.numCells;
 		} else {
-			this.gridResolution = maxHeight / this.numCells;
+			this.gridResolution = this.maxHeight / this.numCells;
 		}
 
 		this.grid = new Grid(
 			this.renderer,
 			this.stage,
 			this.interactionManager,
-			maxWidth,
-			maxHeight,
-			this.gridResolution
+			this.maxWidth,
+			this.maxHeight,
+			this.numCells
 		);
 
 		this.currentObject = null;
@@ -53,12 +55,6 @@ export class Game implements State {
 			var gr = new PIXI.Graphics();
 			var fillColour = Math.floor(Math.random() * 0xdddddd);
 			var lineColour = this.calculate_line_colour(fillColour);
-			window.console.log(
-				"Fill Colour: " +
-					fillColour.toString(16) +
-					"\nLine Colour: " +
-					lineColour.toString(16)
-			);
 			gr.beginFill(fillColour)
 				.lineStyle(2, lineColour)
 				.drawCircle(0, 0, this.circleRadius)
@@ -83,14 +79,6 @@ export class Game implements State {
 		var red = Math.min(((fillColour & 0xff0000) >> 0x10) + 0x10, 0xff);
 		var green = Math.min(((fillColour & 0x00ff00) >> 0x08) + 0x10, 0xff);
 		var blue = Math.min((fillColour & 0x0000ff) + 0x10, 0xff);
-		console.log(
-			"red: " +
-				red.toString(16) +
-				"green: " +
-				green.toString(16) +
-				" blue: " +
-				blue.toString(16)
-		);
 		var lineColour = (red << 0x10) + (green << 8) + blue;
 		return lineColour;
 	}
@@ -108,6 +96,15 @@ export class Game implements State {
 				return false;
 			}
 		}
+		var spriteBox = this.currentObject.sprite.getBounds();
+		if (
+			spriteBox.left < 0 ||
+			spriteBox.right > this.maxWidth ||
+			spriteBox.top < 0 ||
+			spriteBox.bottom > this.maxHeight
+		)
+			return false;
+
 		return true;
 	}
 
@@ -126,7 +123,7 @@ export class Game implements State {
 	move_item(event: PIXI.interaction.InteractionEvent) {
 		var mouseX = event.data.global.x;
 		var mouseY = event.data.global.y;
-		var newPos: Position = this.grid.closest_centre(mouseX, mouseY);
+		var newPos: IPosition = this.grid.closest_centre(mouseX, mouseY);
 		if (this.currentObject === null) {
 			this.push_new_circle(newPos.x, newPos.y);
 		} else {
