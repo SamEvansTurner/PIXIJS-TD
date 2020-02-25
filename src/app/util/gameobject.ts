@@ -30,4 +30,14 @@ export class GameObject {
 			a.bottom < b.top
 		);
 	}
+	delete() {
+		if (typeof this.graphics !== "undefined") {
+			this.graphics.clear();
+			this.graphics.destroy();
+		}
+		if (typeof this.sprite !== "undefined") {
+			this.stage.removeChild(this.sprite);
+			this.sprite.destroy();
+		}
+	}
 }

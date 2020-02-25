@@ -2,6 +2,7 @@ import { GameObject } from "./util/gameobject";
 import * as PIXI from "pixi.js";
 import { IPosition } from "./util/iposition";
 import { Graph } from "./graph";
+import { Pair } from "./util/astarinterfaces";
 export class Grid extends GameObject {
 	graphics: PIXI.Graphics;
 	minorColor: number = 0xa0a0a0;
@@ -13,8 +14,8 @@ export class Grid extends GameObject {
 		public renderer: PIXI.AbstractRenderer,
 		public stage: PIXI.Container,
 		public interactionManager: PIXI.interaction.InteractionManager,
-		maxWidth: number,
-		maxHeight: number,
+		public maxWidth: number,
+		public maxHeight: number,
 		public numCells: number
 	) {
 		super(renderer, stage);
@@ -27,24 +28,6 @@ export class Grid extends GameObject {
 			this.resolution = maxHeight / this.numCells;
 		}
 
-		for (var xStep = 0; xStep < numCells; xStep++) {
-			this.graphics
-				.lineStyle(
-					2,
-					xStep % 10 == 0 ? this.majorColor : this.minorColor
-				)
-				.moveTo(xStep * this.resolution, 0)
-				.lineTo(xStep * this.resolution, maxHeight);
-		}
-		for (var yStep = 0; yStep < numCells; yStep++) {
-			this.graphics
-				.lineStyle(
-					2,
-					yStep % 10 == 0 ? this.majorColor : this.minorColor
-				)
-				.moveTo(0, yStep * this.resolution)
-				.lineTo(maxWidth, yStep * this.resolution);
-		}
 		var obstacles: number[][] = [[]];
 		for (var i = 0; i < numCells; i++) {
 			for (var j = 0; j < numCells; j++) {
@@ -53,28 +36,100 @@ export class Grid extends GameObject {
 			if (i < numCells - 1) obstacles.push([]);
 		}
 
+		this.draw_grid();
+
 		this.graph = new Graph(obstacles, {
-			diagonal: true,
+			diagonal: false,
 			pxPerGrid: this.resolution,
 			width: numCells,
 			height: numCells
 		});
-		this.graph.a_star_search(
-			{ x: 0, y: 0 },
-			{ x: numCells - 1, y: numCells - 1 }
-		);
 	}
 
-	closest_centre(x: number, y: number): IPosition {
+	draw_grid() {
+		for (var xStep = 0; xStep < this.numCells; xStep++) {
+			this.graphics
+				.lineStyle(
+					2,
+					xStep % 10 == 0 ? this.majorColor : this.minorColor
+				)
+				.moveTo(xStep * this.resolution, 0)
+				.lineTo(xStep * this.resolution, this.maxHeight);
+		}
+		for (var yStep = 0; yStep < this.numCells; yStep++) {
+			this.graphics
+				.lineStyle(
+					2,
+					yStep % 10 == 0 ? this.majorColor : this.minorColor
+				)
+				.moveTo(0, yStep * this.resolution)
+				.lineTo(this.maxWidth, yStep * this.resolution);
+		}
+	}
+
+	closest_centre(x: number, y: number): Pair {
 		var xCell = Math.floor(x / this.resolution);
 		var yCell = Math.floor(y / this.resolution);
-		return {
-			x: xCell * this.resolution,
-			y: yCell * this.resolution
-		};
+		return [xCell * this.resolution + 1, yCell * this.resolution + 1];
 	}
 
-	update_astar_grid(gameobjects: Array<GameObject>) {}
+	grid_cell(x: number, y: number): Pair {
+		var xCell = Math.round(x / this.resolution);
+		var yCell = Math.round(y / this.resolution);
+		return [xCell, yCell];
+	}
+
+	run_astar(src: Pair, dest: Pair): Pair[] {
+		return this.graph.a_star_search(src, dest);
+	}
+
+	/* block_astar_grid
+	 ** any 0s in the updates set the astar grid to be 0
+	 ** assumes updates are a square, starting from topleft
+	 */
+	block_astar_grid(topleft: Pair, updates: number[][]) {
+		var graph: number[][] = this.graph.get_graph();
+		var width = updates.length;
+		var height = updates[0].length;
+		for (var i = 0; i < width; i++) {
+			for (var j = 0; j < height; j++) {
+				if (updates[i][j] == 0) {
+					graph[i + topleft[0]][j + topleft[1]] = 0;
+				}
+			}
+		}
+		this.graph.set_graph(graph);
+	}
+
+	set_astar_grid(topleft: Pair, updates: number[][]) {
+		var graph: number[][] = this.graph.get_graph();
+		var width = updates.length;
+		var height = updates[0].length;
+		for (var i = 0; i < width; i++) {
+			for (var j = 0; j < height; j++) {
+				graph[i + topleft[0]][j + topleft[1]] = updates[i][j];
+			}
+		}
+		this.graph.set_graph(graph);
+	}
+
+	draw_path(path: Pair[]) {
+		this.graphics.clear();
+		this.draw_grid();
+		for (var p of path) {
+			this.graphics
+				.lineStyle(0, 0xffffff)
+				.moveTo(0, 0)
+				.beginFill(0xff0000)
+				.drawRect(
+					p[0] * this.resolution,
+					p[1] * this.resolution,
+					this.resolution,
+					this.resolution
+				)
+				.endFill();
+		}
+	}
 
 	update(delta) {
 		return delta;

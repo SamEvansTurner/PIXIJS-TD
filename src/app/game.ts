@@ -4,6 +4,7 @@ import { Circle } from "./circle";
 import { GameObject } from "./util/gameobject";
 import { Grid } from "./grid";
 import { IPosition } from "./util/iposition";
+import { Pair } from "./util/astarinterfaces";
 export class Game implements State {
 	graphics: PIXI.Graphics;
 	gameObjects: Array<GameObject>;
@@ -18,6 +19,8 @@ export class Game implements State {
 	numTextures: number = 20;
 	maxWidth: number;
 	maxHeight: number;
+	src: Pair = [0, 0];
+	dest: Pair = [this.numCells - 1, this.numCells - 1];
 
 	constructor(
 		public renderer: PIXI.AbstractRenderer,
@@ -47,6 +50,8 @@ export class Game implements State {
 			this.maxHeight,
 			this.numCells
 		);
+
+		this.grid.draw_path(this.grid.run_astar(this.src, this.dest));
 
 		this.currentObject = null;
 		this.circleRadius = this.gridResolution - 2;
@@ -86,6 +91,31 @@ export class Game implements State {
 	drop_circle() {
 		if (this.test_all_collisions()) {
 			this.gameObjects.push(this.currentObject);
+			var gridCell: Pair = this.grid.closest_centre(
+				this.currentObject.x,
+				this.currentObject.y
+			);
+			var topleft = this.grid.grid_cell(gridCell[0], gridCell[1]);
+			var sprite_block = [
+				[0, 0],
+				[0, 0]
+			];
+			var clear_block = [
+				[1, 1],
+				[1, 1]
+			];
+			this.grid.block_astar_grid(topleft, sprite_block);
+			var path: Pair[] = this.grid.run_astar(this.src, this.dest);
+			if (path[0][0] !== -1 && path[0][1] !== -1) {
+				window.console.log("dropping circle");
+				this.grid.draw_path(path);
+			} else {
+				window.console.log("not dropping circle");
+				this.gameObjects.pop().delete();
+				window.console.log(this.grid.graph.get_graph());
+				this.grid.set_astar_grid(topleft, clear_block);
+				window.console.log(this.grid.graph.get_graph());
+			}
 			this.currentObject = null;
 		}
 	}
@@ -123,11 +153,11 @@ export class Game implements State {
 	move_item(event: PIXI.interaction.InteractionEvent) {
 		var mouseX = event.data.global.x;
 		var mouseY = event.data.global.y;
-		var newPos: IPosition = this.grid.closest_centre(mouseX, mouseY);
+		var newPos: Pair = this.grid.closest_centre(mouseX, mouseY);
 		if (this.currentObject === null) {
-			this.push_new_circle(newPos.x, newPos.y);
+			this.push_new_circle(newPos[0], newPos[1]);
 		} else {
-			this.currentObject.set_position(newPos.x, newPos.y);
+			this.currentObject.set_position(newPos[0], newPos[1]);
 		}
 	}
 
